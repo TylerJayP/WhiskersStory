@@ -257,11 +257,41 @@ body {
     display: block;
 }
 
+/* Fullscreen minigame overlay */
+.minigame-container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: #000;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.minigame-container.fullscreen iframe {
+    width: 100vw !important;
+    height: 100vh !important;
+    border: none !important;
+    background: #000 !important;
+}
+
 .minigame-header {
     color: #00ffff;
     font-size: 16px;
     margin-bottom: 10px;
     text-align: center;
+}
+
+/* Hide header in fullscreen mode */
+.minigame-container.fullscreen .minigame-header {
+    display: none;
 }
 
 .minigame-frame {
@@ -282,6 +312,25 @@ body {
     text-align: center;
     color: #ff0000;
     padding: 50px;
+}
+
+/* Hide app content when minigame is fullscreen */
+body.minigame-active .app-container > *:not(.minigame-section) {
+    display: none !important;
+}
+
+body.minigame-active .minigame-section {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    background: #000;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 /* Player Stats Section */

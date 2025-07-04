@@ -1,4 +1,4 @@
-// Story Engine for Whiskers Presenter App
+// Story Engine for Whiskers Presenter App - Updated with minigame integration
 class StoryEngine {
     constructor(app) {
         this.app = app;
@@ -377,5 +377,49 @@ class StoryEngine {
     // Getters
     isInitialized() {
         return this.initialized;
+    }
+
+    // Minigame Integration Methods
+    async continueAfterMinigame(result) {
+        console.log(`📖 Continuing story after minigame completion:`, result);
+
+        // Store minigame result in game state
+        if (!this.app.gameState.minigameResults) {
+            this.app.gameState.minigameResults = [];
+        }
+        this.app.gameState.minigameResults.push({
+            success: true,
+            ...result,
+            timestamp: new Date().toISOString()
+        });
+
+        // Continue with the first choice (assuming minigame chapters have a single continuation choice)
+        if (this.currentChapter && this.currentChapter.choices && this.currentChapter.choices.length > 0) {
+            await this.makeChoice(0);
+        } else {
+            console.warn('📖 No choices available after minigame completion');
+        }
+    }
+
+    async handleMinigameFailure(result) {
+        console.log(`📖 Handling minigame failure:`, result);
+
+        // Store minigame result in game state
+        if (!this.app.gameState.minigameResults) {
+            this.app.gameState.minigameResults = [];
+        }
+        this.app.gameState.minigameResults.push({
+            success: false,
+            ...result,
+            timestamp: new Date().toISOString()
+        });
+
+        // For now, treat failure the same as success - continue the story
+        // In a more complex implementation, you might want different paths for failure
+        if (this.currentChapter && this.currentChapter.choices && this.currentChapter.choices.length > 0) {
+            await this.makeChoice(0);
+        } else {
+            console.warn('📖 No choices available after minigame failure');
+        }
     }
 } 

@@ -10,12 +10,9 @@ Each minigame should be a self-contained HTML file:
 ```
 
 ### Required Minigame Files:
-- `bubble_training.html` - Power development after accepting Bubblina's gift
-- `dust_battle.html` - Epic battle sequence in Chapter 8
-- `dust_cleanup.html` - Cooperation minigame in ending sequences
-- `post_chapter_6.html` - Alternative power development game
-- `chapter_8_battle.html` - Alternative battle sequence
-- `ending_cooperation.html` - Alternative cooperation challenge
+- `post_chapter_6.html` - Power development minigame at end of Chapter 6
+- `chapter_8_battle.html` - Battle minigame during Chapter 8 combat
+- `ending_minigame.html` - Final challenge at end of Chapter 12 (before new adventure)
 
 ## Minigame Integration
 
@@ -106,7 +103,7 @@ parent.postMessage({
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Bubble Training</title>
+    <title>Post Chapter 6 Challenge</title>
     <style>
         body {
             margin: 0;
@@ -130,14 +127,14 @@ parent.postMessage({
 </head>
 <body>
     <div class="game-area" id="gameArea">
-        <div id="instructions">Use WASD to move, SPACE to shoot bubbles</div>
+        <div id="instructions">Use WASD to move, SPACE to activate powers</div>
         <div id="gameContent">
             <!-- Game content here -->
         </div>
     </div>
 
     <script>
-        class BubbleTrainingGame {
+        class PostChapter6Game {
             constructor() {
                 this.gameState = 'waiting';
                 this.score = 0;
@@ -162,7 +159,7 @@ parent.postMessage({
                 parent.postMessage({
                     type: 'game_event',
                     event: 'started',
-                    data: { message: 'Bubble training started' }
+                    data: { message: 'Post Chapter 6 challenge started' }
                 }, '*');
                 // Start your game logic here
             }
@@ -175,7 +172,7 @@ parent.postMessage({
                     case 'a': this.moveLeft(); break;
                     case 's': this.moveDown(); break;
                     case 'd': this.moveRight(); break;
-                    case 'space': this.shootBubble(); break;
+                    case 'space': this.activatePower(); break;
                 }
             }
 
@@ -194,7 +191,7 @@ parent.postMessage({
 
         // Initialize game when loaded
         window.addEventListener('load', () => {
-            new BubbleTrainingGame();
+            new PostChapter6Game();
         });
     </script>
 </body>
@@ -204,9 +201,9 @@ parent.postMessage({
 ## Integration Points
 
 ### Story Integration:
-1. **Post Chapter 6**: `bubble_training.html` - Player learns to control new powers
-2. **Chapter 8 Battle**: `dust_battle.html` - Epic confrontation with Dustzilla  
-3. **Ending Cooperation**: `dust_cleanup.html` - Working together with reformed Dusty
+1. **Post Chapter 6**: `post_chapter_6.html` - Power development challenge after story progression
+2. **Chapter 8 Battle**: `chapter_8_battle.html` - Epic confrontation requiring all skills  
+3. **Final Challenge**: `ending_minigame.html` - Ultimate test before new adventures begin
 
 ### Placeholder System:
 - Minigames are currently disabled (`MINIGAMES_ENABLED: false` in config.js)

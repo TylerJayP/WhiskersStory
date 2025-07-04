@@ -4,7 +4,7 @@ const CONFIG = {
     DEVELOPMENT_MODE: true,        // Enable testing controls and manual interaction
     MQTT_ENABLED: true,           // Enable MQTT connection
     AUDIO_ENABLED: false,         // Enable when audio files are available  
-    MINIGAMES_ENABLED: false,     // Enable when minigame files are available
+    MINIGAMES_ENABLED: true,     // Enable when minigame files are available
 
     // MQTT Connection Settings
     MQTT: {

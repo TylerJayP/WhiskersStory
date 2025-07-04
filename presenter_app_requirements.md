@@ -300,9 +300,9 @@ window.minigameFrame.contentWindow.postMessage({
 ```javascript
 // TODO: Implement when minigame files are available
 // Expected minigame integration points:
-// 1. After Chapter 6 completion -> ./minigames/bubble_training.html
-// 2. During Chapter 8 battle -> ./minigames/dust_battle.html  
-// 3. Ending cooperation -> ./minigames/dust_cleanup.html
+// 1. After Chapter 6 completion -> ./minigames/post_chapter_6.html
+// 2. During Chapter 8 battle -> ./minigames/chapter_8_battle.html  
+// 3. Final challenge -> ./minigames/ending_minigame.html
 
 function loadMinigame(minigameId) {
   console.log(`MINIGAME PLACEHOLDER: Loading ${minigameId}`);

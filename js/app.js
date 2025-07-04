@@ -104,10 +104,55 @@ class WhiskersPresenterApp {
                 }
             });
 
+            // Send current status for immediate sync with Orchestrator
+            this.sendCurrentStatus();
+
         } catch (error) {
             console.error('❌ Failed to initialize application:', error);
             this.handleError('initialization', error);
         }
+    }
+
+    // NEW: Send current game status to Orchestrator
+    sendCurrentStatus() {
+        console.log('📡 Sending current status to Orchestrator...');
+        
+        // Send current chapter status
+        if (this.gameState.currentChapter) {
+            this.sendMQTTMessage({
+                type: 'chapter_changed',
+                timestamp: new Date().toISOString(),
+                currentChapter: this.gameState.currentChapter,
+                chapterTitle: this.modules.story.getCurrentChapter()?.title || 'Unknown',
+                chapterType: this.modules.story.getCurrentChapter()?.type || 'story',
+                hasChoices: this.modules.story.hasChoices(),
+                playerState: this.gameState.playerStats
+            });
+        }
+
+        // Send available choices if any
+        const currentChoices = this.modules.story.getCurrentChoices();
+        if (currentChoices && currentChoices.length > 0) {
+            this.sendMQTTMessage({
+                type: 'choices_available',
+                timestamp: new Date().toISOString(),
+                chapter: this.gameState.currentChapter,
+                choices: currentChoices.map((choice, index) => ({
+                    index: index,
+                    text: choice.text
+                })),
+                currentSelection: this.gameState.gameStatus.currentChoiceIndex
+            });
+        }
+
+        // Send ready for input status
+        this.sendMQTTMessage({
+            type: 'ready_for_input',
+            timestamp: new Date().toISOString(),
+            context: this.modules.story.hasRealChoices() ? 'choices' : 'story',
+            awaitingInputType: this.modules.story.hasRealChoices() ? 'choice' : 'proceed',
+            availableChoices: currentChoices ? currentChoices.length : 0
+        });
     }
 
     async startStory() {
@@ -131,6 +176,24 @@ class WhiskersPresenterApp {
                 this.logDebug('story', 'Ignoring choice - not waiting for input');
                 return;
             }
+
+            const currentChoices = this.modules.story.getCurrentChoices();
+            if (choiceIndex < 0 || choiceIndex >= currentChoices.length) {
+                this.logDebug('story', `Invalid choice index: ${choiceIndex}`);
+                return;
+            }
+
+            // Update current selection before processing
+            this.gameState.gameStatus.currentChoiceIndex = choiceIndex;
+            this.modules.ui.updateChoiceSelection(choiceIndex);
+
+            // Send immediate selection update
+            this.sendMQTTMessage({
+                type: 'choice_selected',
+                timestamp: new Date().toISOString(),
+                choiceIndex: choiceIndex,
+                choiceText: currentChoices[choiceIndex].text
+            });
 
             const choice = await this.modules.story.makeChoice(choiceIndex);
             if (choice) {
@@ -173,6 +236,15 @@ class WhiskersPresenterApp {
                 if (!this.modules.ui.isScrollAtTop()) {
                     this.modules.ui.scrollUp();
                     this.logDebug('story', 'Scrolled story text up');
+                    
+                    // Send scroll status
+                    this.sendMQTTMessage({
+                        type: 'scroll_status',
+                        timestamp: new Date().toISOString(),
+                        direction: 'up',
+                        atTop: this.modules.ui.isScrollAtTop(),
+                        atBottom: this.modules.ui.isScrollAtBottom()
+                    });
                     return;
                 }
             } else if (direction === 'down') {
@@ -180,6 +252,15 @@ class WhiskersPresenterApp {
                 if (!this.modules.ui.isScrollAtBottom()) {
                     this.modules.ui.scrollDown();
                     this.logDebug('story', 'Scrolled story text down');
+                    
+                    // Send scroll status
+                    this.sendMQTTMessage({
+                        type: 'scroll_status',
+                        timestamp: new Date().toISOString(),
+                        direction: 'down',
+                        atTop: this.modules.ui.isScrollAtTop(),
+                        atBottom: this.modules.ui.isScrollAtBottom()
+                    });
                     return;
                 }
             }
@@ -202,6 +283,18 @@ class WhiskersPresenterApp {
             if (newIndex !== this.gameState.gameStatus.currentChoiceIndex) {
                 this.gameState.gameStatus.currentChoiceIndex = newIndex;
                 this.modules.ui.updateChoiceSelection(newIndex);
+
+                // Send updated choices with new selection back to Orchestrator
+                this.sendMQTTMessage({
+                    type: 'choices_available',
+                    timestamp: new Date().toISOString(),
+                    chapter: this.gameState.currentChapter,
+                    choices: currentChoices.map((choice, index) => ({
+                        index: index,
+                        text: choice.text
+                    })),
+                    currentSelection: newIndex
+                });
 
                 this.logDebug('story', `Choice selection changed to: ${newIndex}`);
             }
@@ -375,6 +468,11 @@ class WhiskersPresenterApp {
 
                 case 'reset_game':
                     await this.resetGame();
+                    break;
+
+                case 'status_request':
+                    console.log('📡 Received status request from Orchestrator');
+                    this.sendCurrentStatus();
                     break;
 
                 default:

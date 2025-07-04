@@ -1,4 +1,4 @@
-// Minigame Manager for Whiskers Presenter App
+// Minigame Manager for Whiskers Presenter App - Updated with error handling
 class MinigameManager {
     constructor(app) {
         this.app = app;
@@ -75,9 +75,9 @@ class MinigameManager {
         // Create iframe
         this.minigameFrame = document.createElement('iframe');
         this.minigameFrame.src = minigameUrl;
-        this.minigameFrame.style.width = '100%';
-        this.minigameFrame.style.height = '400px';
-        this.minigameFrame.style.border = '2px solid #00ff00';
+        this.minigameFrame.style.width = '100vw';
+        this.minigameFrame.style.height = '100vh';
+        this.minigameFrame.style.border = 'none';
         this.minigameFrame.style.backgroundColor = '#000';
         this.minigameFrame.allow = 'fullscreen';
 
@@ -293,7 +293,16 @@ class MinigameManager {
         setTimeout(() => {
             this.unloadCurrentMinigame();
             // Let story engine know to continue
-            this.app.modules.story.continueAfterMinigame(result);
+            try {
+                if (this.app.modules.story && typeof this.app.modules.story.continueAfterMinigame === 'function') {
+                    this.app.modules.story.continueAfterMinigame(result);
+                } else {
+                    console.error('🎮 Story engine continueAfterMinigame method not available');
+                }
+            } catch (error) {
+                console.error('🎮 Error continuing story after minigame:', error);
+                this.app.handleError('minigame_completion', error);
+            }
         }, 2000);
     }
 
@@ -310,7 +319,16 @@ class MinigameManager {
         setTimeout(() => {
             this.unloadCurrentMinigame();
             // Let story engine handle failure
-            this.app.modules.story.handleMinigameFailure(result);
+            try {
+                if (this.app.modules.story && typeof this.app.modules.story.handleMinigameFailure === 'function') {
+                    this.app.modules.story.handleMinigameFailure(result);
+                } else {
+                    console.error('🎮 Story engine handleMinigameFailure method not available');
+                }
+            } catch (error) {
+                console.error('🎮 Error handling minigame failure:', error);
+                this.app.handleError('minigame_failure', error);
+            }
         }, 2000);
     }
 
@@ -341,13 +359,31 @@ class MinigameManager {
     }
 
     showMinigameContainer() {
-        this.minigameContainer.style.display = 'block';
+        // Enable fullscreen mode
+        this.minigameContainer.style.display = 'flex';
+        this.minigameContainer.classList.add('fullscreen');
+
+        // Hide story content by adding class to body
+        document.body.classList.add('minigame-active');
+
+        // Update UI manager
         this.app.modules.ui.updateMinigameStatus(true);
+
+        console.log('🎮 Minigame fullscreen mode activated');
     }
 
     hideMinigameContainer() {
+        // Disable fullscreen mode
         this.minigameContainer.style.display = 'none';
+        this.minigameContainer.classList.remove('fullscreen');
+
+        // Show story content by removing class from body
+        document.body.classList.remove('minigame-active');
+
+        // Update UI manager
         this.app.modules.ui.updateMinigameStatus(false);
+
+        console.log('🎮 Minigame fullscreen mode deactivated');
     }
 
     showLoadingState(minigameId) {
@@ -381,27 +417,32 @@ class MinigameManager {
     }
 
     notifyMinigameStatus(status, minigameId, data = null) {
-        // Update game state
-        this.app.gameState.gameStatus.minigameActive = (status === 'started' || status === 'progress');
+        try {
+            // Update game state
+            this.app.gameState.gameStatus.minigameActive = (status === 'started' || status === 'progress');
 
-        // Send MQTT notification
-        if (this.app.modules.mqtt && this.app.modules.mqtt.isConnected()) {
-            this.app.modules.mqtt.publish({
-                type: 'minigame_status',
-                status: status,
-                minigameId: minigameId,
-                result: data
-            });
-        }
+            // Send MQTT notification
+            if (this.app.modules.mqtt && typeof this.app.modules.mqtt.isConnected === 'function' && this.app.modules.mqtt.isConnected()) {
+                this.app.modules.mqtt.publish({
+                    type: 'minigame_status',
+                    status: status,
+                    minigameId: minigameId,
+                    result: data
+                });
+            }
 
-        // Notify development tools
-        if (CONFIG.DEVELOPMENT_MODE && this.app.modules.development) {
-            this.app.modules.development.logEvent('minigame_status', {
-                status,
-                minigameId,
-                data,
-                timestamp: new Date().toISOString()
-            });
+            // Notify development tools
+            if (CONFIG.DEVELOPMENT_MODE && this.app.modules.development && typeof this.app.modules.development.logEvent === 'function') {
+                this.app.modules.development.logEvent('minigame_status', {
+                    status,
+                    minigameId,
+                    data,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        } catch (error) {
+            console.error('🎮 Error notifying minigame status:', error);
+            // Don't re-throw - this is a notification, not critical for gameplay
         }
     }
 

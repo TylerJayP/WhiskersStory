@@ -358,11 +358,14 @@ By evening, Whiskers had become a formidable solo warrior. When a group of dust 
 
 However, he also noticed that while his power had grown tremendously, he was becoming somewhat isolated. Other animals in the neighborhood watched him with a mixture of awe and distance, unsure how to relate to someone wielding such magical abilities.
 
-**Continue to Chapter 7B**`,
+Bubblina appeared before him as twilight settled over Maplewood. "Your technical mastery is impressive, Whiskers, but true power comes from understanding yourself and your abilities in harmony. Are you ready for the ultimate test of your skills?"
+
+**Power Development Challenge**`,
         choices: [
-            { text: "Continue to Chapter 7B", nextChapter: 'chapter7b' }
+            { text: "Accept the challenge and prove your mastery", nextChapter: 'chapter7b' }
         ],
-        type: 'story',
+        type: 'minigame',
+        minigameId: 'post_chapter_6',
         effects: { powerLevel: 'master', isolation: true }
     },
 
